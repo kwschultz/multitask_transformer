@@ -18,7 +18,7 @@ if __name__ == '__main__':
     model = DualClassifier()
 
     # Given some sentences, compute their embeddings in 384 dim space
-    embeddings = model.encode(test_text, convert_to_tensor=True)
+    embeddings = model.backbone.encode(test_text, convert_to_tensor=True)
     print(f"Embeddings size: {embeddings.shape}")
 
     # Compute cosine similarity between each sentence
