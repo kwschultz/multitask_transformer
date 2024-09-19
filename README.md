@@ -1,7 +1,7 @@
 # multitask_transformer
 Implementing a custom Sentence Transformer neural network for multi-task learning using PyTorch and Python.
 
-`Note:` Will implementing a customized version of the MiniLM Sentence Transformer due to its balance of performance and efficiency.
+<!-- `Note:` Will implementing a customized version of the MiniLM Sentence Transformer due to its balance of performance and efficiency. -->
 
 
 ### Goals
@@ -13,11 +13,35 @@ Implement Encoder-only architecture for model inference, deferring training for 
 - `Task B:` NER, or Sentiment Analysis etc. (TODO: Select one)
 
 ### Virtual Environment Setup
-Use Conda to create virtual environment and install requirements. 
-Use Bash to run [conda_env_setup.sh](conda_env_setup.sh)
+- Use Conda to create virtual environment and install requirements. 
+- Use Bash to run [conda_env_setup.sh](conda_env_setup.sh)
+
+## Discussion
+
+### 1. Discuss any choices you had to make regarding the model architecture outside of the transformer backbone.
+
+#### 1A: 
+Example embeddings for a few sentences, and their corresponding cosine similarities:
+```commandline
+> python test_embeddings.py
+```
+...
+```
+Embeddings size: torch.Size([3, 384])
+   cosine_sim                     sentence_1                      sentence_2
+1    0.376084  The dog ran across the grass.  The cat jumped into the weeds.
+0    0.069512  The dog ran across the grass.            Why is the sky blue?
+2    0.021868           Why is the sky blue?  The cat jumped into the weeds.
+```
+
+#### 1B: 
+I chose MiniLM as the specific SentenceTransformer (based on the BERT architecture). This model has a good tradeoff between quality contextual embeddings while being computationally efficient. If the assignment was to implement from scratch, that would have taken longer than the specified 2 hours. 
 
 
-### 
+
+### 2. Implementing multi-task learning/prediction 
+
+
 <!-- Instructions for project
 
 Step 1: Implement a Sentence Transformer Model
