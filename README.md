@@ -1,29 +1,33 @@
 # multitask_transformer
 Implementing a custom Sentence Transformer neural network for multi-task learning using PyTorch and Python.
 
-<!-- `Note:` Will implementing a customized version of the MiniLM Sentence Transformer due to its balance of performance and efficiency. -->
-
-
 ### Goals
-Implement Encoder-only architecture for model inference, deferring training for later follow up. 
+Implement Encoder-only architecture for embedding sentences, then two independent classifier heads on top of the embeddings for multi-task predictions.  
 
 `Goal 1:` Encode input sentences into fixed length embeddings. <br>
 `Goal 2:` Expand architecture to support multi-task learning. 
 - `Task A:` Text Classification
-- `Task B:` NER, or Sentiment Analysis etc. (TODO: Select one)
+  - 6 Classes: 'sports', 'health', 'tech', 'finance', 'education', 'other'
+- `Task B:` Sentiment Analysis 
+  - 3 Classes: 'negative', 'neutral', 'positive'
 
 ### Virtual Environment Setup
 - Use Conda to create virtual environment and install requirements. 
 - Use Bash to run [conda_env_setup.sh](conda_env_setup.sh)
 
-## Discussion
+### Architecture 
+- SentenceTransformer ('all-MiniLM-L6-v2') backbone to compute contextualized sentence embeddings. It has a good balance of performance and efficiency.
+- Added two instances of a simple multi-layer perceptron for each classification head
+- Each classifier MLP designed for simplicity, while being able to model complex relationships between embeddings and classes. 
+  - fully connected layer from embeddings into smaller hidden representation (half the embedding size 384 -> 192)
+  - GELU activation function
+    - Chose nonlinear GELU function to match what was used in MiniLM backbone
+  - Final fully connected layer to the classes (192 -> 6) or (192 -> 3)
 
-### 1. Discuss any choices you had to make regarding the model architecture outside of the transformer backbone.
-
-#### 1A: 
-Example embeddings for a few sentences, and their corresponding cosine similarities:
+### Embeddings Example
+Embedding a few sentences, and their corresponding cosine similarities (relevance):
 ```commandline
-> python test_embeddings.py
+> python embedding_example.py
 ```
 ...
 ```
@@ -34,51 +38,46 @@ Embeddings size: torch.Size([3, 384])
 2    0.021868           Why is the sky blue?  The cat jumped into the weeds.
 ```
 
-#### 1B: 
-I chose MiniLM as the specific SentenceTransformer (based on the BERT architecture). This model has a good tradeoff between quality contextual embeddings while being computationally efficient. If the assignment was to implement from scratch, that would have taken longer than the specified 2 hours. 
+### Multi-task Predictions 
 
+Example text classification and sentiment predictions for a few sentences. <br>
+`Note:` With randomized model weights on init, each run produces different predictions.
+```commandline
+> python prediction_example.py
+```
 
+```
+Multi-task predictions using randomized classifier weights...
 
-### 2. Implementing multi-task learning/prediction 
+                         sentence   text_class    sentiment
+0   The dog ran across the grass.         tech     positive
+1            Why is the sky blue?      finance      neutral
+2  The cat jumped into the weeds.       health     negative
+```
 
+### Multi-Task Model Training Considerations 
 
-<!-- Instructions for project
+#### To begin training the multi-task sentence transformer
+1. If applying to same/similar domain as the pretraining corpus, freeze the weights of the embedding layers to preserve pretraining generality (e.g. MiniLM layers)
+2. If modeling a different or specialized domain, fine-tuning some of the embedding layers in addition to the classification layers can work well.  
+2. To train for classification tasks, update the weights for only the classifier layers
+   1. If the dataset contains all labels for each example (e.g. text class and sentiment), then training similar tasks jointly makes sense. Include both in the same loss function for regularization.
+   2. If the task training is done with separate datasets or tasks are dissimilar, then train independently.
+      1. E.g. For training on sentiment dataset, freeze the named entity recognition layers
 
-Step 1: Implement a Sentence Transformer Model
-● Implement a sentence transformer model using any deep learning framework of your
-choice. This model should be able to encode input sentences into fixed-length
-embeddings.
-● Test your implementation with a few sample sentences and showcase the obtained
-embeddings.
-● Discuss any choices you had to make regarding the model architecture outside of the
-transformer backbone
-Step 2: Multi-Task Learning Expansion
-Expand the sentence transformer model architecture to handle a multi-task learning setting.
-● Task A: Sentence Classification
-○ Implement a task-specific head for classifying sentences into predefined classes
-○ Classify sentences into predefined classes (you can make these up).
-● Task B: [Choose an Additional NLP Task]
-○ Implement a second task-specific head for a different NLP task, such as Named
-Entity Recognition (NER) or Sentiment Analysis (you can make the labels up).
-● Discuss the changes made to the architecture to support multi-task learning.
-Note that it’s not required to actually train the multi-task learning model or implement a training
-loop. The focus is on implementing a forward pass that can accept an input sentence and output
-predictions for each task that you define.
+#### Implementation of multi-task model or independent models
+1. Prefer a multi-task single model when
+   2. Tasks input data distribution is similar, and the tasks need similar context or features 
+   3. Performance constraints favor speed, a multi-task model only computes the initial representation once. 
+   4. Depending on the model deployment specifics, it may be less efficient to pass the input data to another model and get the response back.
+2. Prefer individual task models when
+   1. The tasks need to be performed at different times/cadence.
+   2. The tasks are not similar or the input data for each task is different.
+   3. When jointly training a multi-task model, you may observe that the gradients for each task's loss function oppose each other, leading to slower model convergence and lower performance.
 
-Step 3: Discussion Questions
-1. Consider the scenario of training the multi-task sentence transformer that you
-implemented in Task 2. Specifically, discuss how you would decide which portions of the
-network to train and which parts to keep frozen.
-For example,
-● When would it make sense to freeze the transformer backbone and only train the
-task specific layers?
-● When would it make sense to freeze one head while training the other?
-2. Discuss how you would decide when to implement a multi-task model like the one in this
-assignment and when it would make more sense to use two completely separate models
-for each task.
-3. When training the multi-task model, assume that Task A has abundant data, while Task
-B has limited data. Explain how you would handle this imbalance.
+#### When the amount of data for each task differs greatly
 
--->
-
-
+Assume task B has limited data but is still similar to task A, which has ample data. 
+- This scenario can be addressed with sequential task-specific fine tuning. 
+    - Initially fine tuning the model for task A, then freezing those weights and fine tuning for task B.
+- It is possible to explore text data augmentation (synthetic data generation) to supplement the training data for task B.
