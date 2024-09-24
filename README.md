@@ -55,6 +55,7 @@ Multi-task predictions using randomized classifier weights...
 2  The cat jumped into the weeds.       health     negative
 ```
 
+<!--
 ### Multi-Task Model Training Considerations 
 
 #### To begin training the multi-task sentence transformer
@@ -74,6 +75,8 @@ Multi-task predictions using randomized classifier weights...
    1. The tasks need to be performed at different times/cadence.
    2. The tasks are not similar or the input data for each task is different.
    3. When jointly training a multi-task model, you may observe that the gradients for each task's loss function oppose each other, leading to slower model convergence and lower performance.
+-->
+
 
 #### When the amount of data for each task differs greatly
 
